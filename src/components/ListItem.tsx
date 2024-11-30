@@ -1,4 +1,3 @@
-// src/components/ListItem.tsx
 import React from 'react';
 import { Maintenance } from '../pages/Home'; // Maintenance türünü import edin
 

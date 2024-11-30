@@ -1,5 +1,5 @@
-// src/pages/Home.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import withBackgroundColor from '../components/ListItem';
 
@@ -25,18 +25,21 @@ const ListItem: React.FC<Maintenance> = ({ buildingName, address, adminName, mon
 const StyledListItem = withBackgroundColor(ListItem);
 
 const Home: React.FC = () => {
-  const [maintenances, setMaintenances] = useState<Maintenance[]>([]);
+  const { data: maintenances, isLoading, error } = useQuery({
+    queryKey: ['maintenances'],
+    queryFn: async () => {
+      const response = await api.get<Maintenance[]>('/maintenances');
+      return response.data;
+    },
+  });
 
-  useEffect(() => {
-    api.get<Maintenance[]>('/maintenances')
-      .then(response => setMaintenances(response.data))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
+  if (isLoading) return <div>Loading...</div>;
+  if (error instanceof Error) return <div>Error: {error.message}</div>;
 
   return (
     <div>
       <h1>Maintenance List</h1>
-      {maintenances.map((maintenance) => (
+      {maintenances?.map((maintenance) => (
         <StyledListItem key={maintenance.id} {...maintenance} />
       ))}
       <button onClick={() => window.location.href = '/add'}>Add New</button>

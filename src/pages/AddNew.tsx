@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import api from '../services/api';
+import { useMutation } from '@tanstack/react-query';
 
 const AddNew: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -8,6 +9,20 @@ const AddNew: React.FC = () => {
     adminName: '',
     monthlyFee: 0,
     description: '',
+  });
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      await api.post('/maintenance', formData);
+    },
+    onSuccess: () => {
+      alert('New maintenance added successfully');
+      window.location.href = '/';
+    },
+    onError: (error) => {
+      console.error('Error adding new maintenance:', error);
+      alert('Failed to add new maintenance');
+    },
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -20,14 +35,7 @@ const AddNew: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await api.post('/maintenance', formData);
-      alert('New maintenance added successfully');
-      window.location.href = '/';
-    } catch (error) {
-      console.error('Error adding new maintenance:', error);
-      alert('Failed to add new maintenance');
-    }
+    mutation.mutate();
   };
 
   return (
