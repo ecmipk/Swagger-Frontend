@@ -1,8 +1,36 @@
 import React, { useState } from 'react';
-import api from '../services/api';
 import { useMutation } from '@tanstack/react-query';
+import api from '../services/api';
+import { useDispatch } from 'react-redux';
+import { addMaintenance } from '../redux/slices/maintenanceSlice';
+import { Maintenance } from '../redux/slices/maintenanceSlice';
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  VStack,
+  Heading,
+  useToast,
+  Container,
+  Stack,
+  useBreakpointValue,
+  extendTheme,
+} from '@chakra-ui/react';
+
+// Chakra UI tema uzantısı (isteğe bağlı)
+const theme = extendTheme({
+  colors: {
+    brand: {
+      500: '#3182CE',
+    },
+  },
+});
 
 const AddNew: React.FC = () => {
+  const dispatch = useDispatch();
+  const toast = useToast();
   const [formData, setFormData] = useState({
     buildingName: '',
     address: '',
@@ -13,15 +41,33 @@ const AddNew: React.FC = () => {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      await api.post('/maintenance', formData);
+      const response = await api.post('/maintenance', formData);
+      return response.data;
     },
-    onSuccess: () => {
-      alert('New maintenance added successfully');
-      window.location.href = '/';
+    onSuccess: (data: unknown) => {
+      if (data && typeof data === 'object' && 'id' in data) {
+        const maintenanceData = data as Maintenance;
+        dispatch(addMaintenance(maintenanceData));
+        toast({
+          title: 'Success',
+          description: 'New maintenance added successfully',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+        window.location.href = '/';
+      } else {
+        console.error('Unexpected data format:', data);
+      }
     },
-    onError: (error) => {
-      console.error('Error adding new maintenance:', error);
-      alert('Failed to add new maintenance');
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'There was an error adding the maintenance.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
     },
   });
 
@@ -29,84 +75,92 @@ const AddNew: React.FC = () => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: name === 'monthlyFee' ? parseFloat(value) : value,
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     mutation.mutate();
   };
 
   return (
-    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px', border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>Add New Maintenance</h1>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="buildingName" style={{ display: 'block', marginBottom: '8px' }}>Building Name</label>
-          <input
-            type="text"
-            name="buildingName"
-            id="buildingName"
-            placeholder="Enter building name"
-            onChange={handleChange}
-            style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-            required
-          />
-        </div>
-        <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="address" style={{ display: 'block', marginBottom: '8px' }}>Address</label>
-          <input
-            type="text"
-            name="address"
-            id="address"
-            placeholder="Enter address"
-            onChange={handleChange}
-            style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-            required
-          />
-        </div>
-        <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="adminName" style={{ display: 'block', marginBottom: '8px' }}>Admin Name</label>
-          <input
-            type="text"
-            name="adminName"
-            id="adminName"
-            placeholder="Enter admin name"
-            onChange={handleChange}
-            style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-            required
-          />
-        </div>
-        <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="monthlyFee" style={{ display: 'block', marginBottom: '8px' }}>Monthly Fee</label>
-          <input
-            type="number"
-            name="monthlyFee"
-            id="monthlyFee"
-            placeholder="Enter monthly fee"
-            onChange={handleChange}
-            style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-            required
-          />
-        </div>
-        <div style={{ marginBottom: '16px' }}>
-          <label htmlFor="description" style={{ display: 'block', marginBottom: '8px' }}>Description</label>
-          <input
-            type="text"
-            name="description"
-            id="description"
-            placeholder="Enter description"
-            onChange={handleChange}
-            style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
-            required
-          />
-        </div>
-        <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#007BFF', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          Submit
-        </button>
-      </form>
-    </div>
+    <Container maxW="lg" mt={8} p={4}>
+      <Box
+        p={8}
+        borderWidth={1}
+        borderRadius="lg"
+        boxShadow="lg"
+        bg="white"
+        overflow="hidden"
+      >
+        <Heading as="h1" mb={6} textAlign="center" fontSize="2xl" color="brand.500">
+          Add New Maintenance
+        </Heading>
+        <form onSubmit={handleSubmit}>
+          <Stack spacing={4}>
+            <FormControl isRequired>
+              <FormLabel>Building Name</FormLabel>
+              <Input
+                type="text"
+                name="buildingName"
+                placeholder="Building Name"
+                value={formData.buildingName}
+                onChange={handleChange}
+                focusBorderColor="brand.500"
+              />
+            </FormControl>
+            <FormControl isRequired>
+              <FormLabel>Address</FormLabel>
+              <Input
+                type="text"
+                name="address"
+                placeholder="Address"
+                value={formData.address}
+                onChange={handleChange}
+                focusBorderColor="brand.500"
+              />
+            </FormControl>
+            <FormControl isRequired>
+              <FormLabel>Admin Name</FormLabel>
+              <Input
+                type="text"
+                name="adminName"
+                placeholder="Admin Name"
+                value={formData.adminName}
+                onChange={handleChange}
+                focusBorderColor="brand.500"
+              />
+            </FormControl>
+            <FormControl isRequired>
+              <FormLabel>Monthly Fee</FormLabel>
+              <Input
+                type="number"
+                name="monthlyFee"
+                placeholder="Monthly Fee"
+                value={formData.monthlyFee}
+                onChange={handleChange}
+                focusBorderColor="brand.500"
+              />
+            </FormControl>
+            <FormControl isRequired>
+              <FormLabel>Description</FormLabel>
+              <Input
+                type="text"
+                name="description"
+                placeholder="Description"
+                value={formData.description}
+                onChange={handleChange}
+                focusBorderColor="brand.500"
+              />
+            </FormControl>
+            <Button type="submit" colorScheme="brand" size="md" mt={4} width="auto">
+              Add
+            </Button>
+          </Stack>
+        </form>
+      </Box>
+    </Container>
   );
 };
 
