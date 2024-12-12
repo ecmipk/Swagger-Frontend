@@ -1,10 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
-import withBackgroundColor from '../components/ListItem';
-import { useDispatch, useSelector } from 'react-redux';
-import { setMaintenances } from '../redux/slices/maintenanceSlice';
-import { RootState } from '../redux/store';
+import ListItem from '../components/ListItem';
+import withBackgroundColor from '../components/withBackgroundColor';
 
 export interface Maintenance {
   id: number;
@@ -15,44 +13,44 @@ export interface Maintenance {
   description: string;
 }
 
-const ListItem: React.FC<Maintenance> = ({ buildingName, address, adminName, monthlyFee, description }) => (
-  <div>
-    <h3>{buildingName}</h3>
-    <p>{address}</p>
-    <p>{adminName}</p>
-    <p>Monthly Fee: {monthlyFee}</p>
-    <p>{description}</p>
-  </div>
-);
-
-const StyledListItem = withBackgroundColor(ListItem);
-
 const Home: React.FC = () => {
-  const dispatch = useDispatch();
-  const maintenances = useSelector((state: RootState) => state.maintenance.maintenances);
+  const [lockedItems, setLockedItems] = useState<Set<number>>(new Set()); // Kilitli kartlar için state
 
-  const { data, isLoading, error } = useQuery<Maintenance[], Error>({
+  const { data: maintenances, isLoading, error } = useQuery({
     queryKey: ['maintenances'],
     queryFn: async () => {
       const response = await api.get<Maintenance[]>('/maintenances');
       return response.data;
     },
   });
-  
-  useEffect(() => {
-    if (data) {
-      dispatch(setMaintenances(data));
-    }
-  }, [data, dispatch]);
-  
+
+  const handleLockToggle = (id: number) => {
+    setLockedItems((prevState) => {
+      const updatedSet = new Set(prevState);
+      if (updatedSet.has(id)) {
+        updatedSet.delete(id);
+      } else {
+        updatedSet.add(id);
+      }
+      return updatedSet;
+    });
+  };
+
   if (isLoading) return <div>Loading...</div>;
   if (error instanceof Error) return <div>Error: {error.message}</div>;
+
+  const StyledListItem = withBackgroundColor(ListItem); // Arka plan rengini ve kilit simgesini ekleyen HOC
 
   return (
     <div>
       <h1>Maintenance List</h1>
-      {maintenances.map((maintenance) => (
-        <StyledListItem key={maintenance.id} {...maintenance} />
+      {maintenances?.map((maintenance) => (
+        <StyledListItem
+          key={maintenance.id}
+          {...maintenance}
+          isLocked={lockedItems.has(maintenance.id)} // Kilitli olup olmadığını kontrol et
+          onLockToggle={() => handleLockToggle(maintenance.id)} // Kilidi değiştir
+        />
       ))}
       <button onClick={() => window.location.href = '/add'}>Add New</button>
     </div>

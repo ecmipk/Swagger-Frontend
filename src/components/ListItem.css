@@ -1,0 +1,78 @@
+/* Kartların genel düzeni */
+.card {
+    width: 300px;
+    height: 400px;
+    margin: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+  
+  .card:hover {
+    transform: scale(1.05);
+  }
+  
+  .card-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+  
+  /* Editable alanlar */
+  .editable-fields {
+    margin-top: 20px;
+  }
+  
+  .editable-item {
+    margin-bottom: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+  
+  .editable-item input {
+    margin-left: 10px;
+    padding: 5px;
+    width: 80%;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+  }
+  
+  .editable-item span {
+    font-size: 14px;
+    color: #333;
+  }
+  
+  /* Flexbox düzeni */
+  .container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+  }
+  
+  @media (max-width: 768px) {
+    .card {
+      width: 100%;
+      height: auto;
+    }
+  }
+  
+  /* Responsive kartlar */
+  .container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+  }
+  
+  .card {
+    flex: 1 1 300px; /* Esnek genişlikte, 300px'e kadar genişleyebilen kartlar */
+    max-width: 300px; /* Maksimum genişlik 300px */
+  }
+  
